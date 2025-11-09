@@ -10,11 +10,15 @@ This reference documents the key conventions used in the code-execution-first MC
 ├── scripts/              # Infrastructure scripts (don't modify)
 │   ├── run_mcpo.sh      # Start MCPO server
 │   ├── download_openapi.sh  # Download OpenAPI specs
+│   ├── generate_registry.sh  # Generate token-efficient registry
+│   ├── list_tools.sh    # Interactive tool browser (PRIMARY INTERFACE)
 │   └── TEMPLATE.sh      # Template for workspace scripts
 ├── workspace/            # User scripts (PUT YOUR SCRIPTS HERE)
 │   └── *.sh             # Scripts calling MCP tools via curl
-└── servers/              # Downloaded OpenAPI specs (auto-generated)
-    └── *-openapi.json   # OpenAPI specs from MCPO
+├── servers/              # Downloaded OpenAPI specs (auto-generated)
+│   └── *-openapi.json   # OpenAPI specs from MCPO
+└── registry/             # Token-efficient tool registry (auto-generated)
+    └── registry.json    # Compact index (DO NOT READ DIRECTLY)
 ```
 
 ## Convention-Based Configuration
@@ -47,33 +51,42 @@ This reference documents the key conventions used in the code-execution-first MC
 
 ## Discovering Tools and Parameters
 
-### List all servers
+**IMPORTANT: Always use `./scripts/list_tools.sh` as the primary interface. Do NOT read `registry/registry.json` directly.**
+
+### PRIMARY METHOD: Using list_tools.sh (Token-Efficient)
+
 ```bash
-cat mcp_config.json | jq '.mcpServers | keys[]'
+# List all servers with tool counts
+./scripts/list_tools.sh
+
+# List tools for a specific server
+./scripts/list_tools.sh --server git
+
+# Search tools by keyword
+./scripts/list_tools.sh --search "branch"
+
+# Get full tool details (summary, description, parameters, endpoint)
+./scripts/list_tools.sh --detail git git_status
+
+# Show registry statistics
+./scripts/list_tools.sh --stats
 ```
 
-### List all tools for a server
-```bash
-cat servers/git-openapi.json | jq '.paths | keys[]'
-```
+### ALTERNATIVE: Direct OpenAPI Queries (When Full Descriptions Needed)
 
-### Get tool description
+Use these only when you need detailed parameter descriptions:
+
 ```bash
+# Get tool description
 cat servers/git-openapi.json | jq '.paths."/git_status".post.description'
-```
 
-### Get required parameters
-```bash
+# Get complete parameter schema with full descriptions
 cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model'
-```
 
-### Get parameter types
-```bash
+# Get parameter types
 cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model.properties'
-```
 
-### Get required parameter list
-```bash
+# Get required parameter list
 cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model.required'
 ```
 

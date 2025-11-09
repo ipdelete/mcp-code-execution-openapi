@@ -117,3 +117,17 @@ echo "========================================="
 if [[ $FAIL_COUNT -gt 0 ]]; then
   exit 1
 fi
+
+# Generate registry from downloaded specs
+if [[ $SUCCESS_COUNT -gt 0 ]]; then
+  echo ""
+  echo "Generating token-efficient registry..."
+
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if [[ -x "${SCRIPT_DIR}/generate_registry.sh" ]]; then
+    "${SCRIPT_DIR}/generate_registry.sh"
+  else
+    echo "⚠️  Warning: generate_registry.sh not found or not executable"
+    echo "   Registry not generated"
+  fi
+fi

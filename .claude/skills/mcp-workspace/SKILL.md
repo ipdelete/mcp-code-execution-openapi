@@ -9,6 +9,8 @@ description: Create bash scripts to interact with MCP servers via MCPO (MCP-to-O
 
 This skill guides the creation of bash scripts that interact with MCP (Model Context Protocol) servers through MCPO (MCP-to-OpenAPI Proxy). Instead of direct MCP protocol calls, scripts use simple HTTP requests with curl and jq to call MCP tools, enabling the **code-execution-first pattern**: fetch data via HTTP, process locally in bash, return minimal results.
 
+**Key Tool Discovery Interface:** Always use `./scripts/list_tools.sh` to discover and explore MCP tools. This provides a token-efficient interface (~27% savings) compared to reading OpenAPI specs or registry files directly.
+
 ## When to Use This Skill
 
 Activate this skill when:
@@ -26,12 +28,18 @@ The typical workflow involves:
    ./scripts/run_mcpo.sh
    ```
 
-2. **Download OpenAPI specs** (if not already downloaded):
+2. **Download OpenAPI specs and generate registry** (if not already downloaded):
    ```bash
    ./scripts/download_openapi.sh
+   # This automatically generates the token-efficient registry
    ```
 
-3. **Create workspace script** (see detailed instructions below)
+3. **Discover available tools** using the registry interface:
+   ```bash
+   ./scripts/list_tools.sh
+   ```
+
+4. **Create workspace script** (see detailed instructions below)
 
 ## Creating a Workspace Script
 
@@ -39,26 +47,39 @@ To create a script that calls an MCP tool:
 
 ### 1. Identify the Tool
 
-First, determine which MCP server and tool to use. Use the helper script to list available tools:
+**PRIMARY METHOD: Use the registry interface** (token-efficient):
 
 ```bash
-.claude/skills/mcp-workspace/scripts/list_tools.sh <server-name>
+# List all available servers
+./scripts/list_tools.sh
+
+# Browse tools for a specific server
+./scripts/list_tools.sh --server git
+
+# Search for tools by keyword
+./scripts/list_tools.sh --search "branch"
 ```
 
-Or manually explore the OpenAPI spec:
+**Alternative: Query OpenAPI spec directly** (when you need detailed descriptions):
+
 ```bash
 cat servers/<server-name>-openapi.json | jq '.paths | keys[]'
 ```
 
 ### 2. Check Tool Parameters
 
-Use the helper script to see required parameters:
+**PRIMARY METHOD: Use the registry interface**:
 
 ```bash
-.claude/skills/mcp-workspace/scripts/show_tool_schema.sh <server-name> <tool-name>
+# Get tool details including parameters
+./scripts/list_tools.sh --detail <server-name> <tool-name>
+
+# Example:
+./scripts/list_tools.sh --detail git git_status
 ```
 
-Or manually:
+**Alternative: Query OpenAPI spec directly** (for full parameter descriptions):
+
 ```bash
 cat servers/<server-name>-openapi.json | jq '.components.schemas.<tool-name>_form_model'
 ```
@@ -170,66 +191,83 @@ echo "$LOGS" | jq -r '.commits[] | .author' | sort | uniq -c | sort -rn
 
 ## Discovering Available Tools
 
-### List All Servers
+**IMPORTANT: Always use `./scripts/list_tools.sh` as the primary interface. Do NOT read `registry/registry.json` directly.**
+
+### List All Servers and Tool Counts
+
 ```bash
-cat mcp_config.json | jq '.mcpServers | keys[]'
+./scripts/list_tools.sh
 ```
 
 ### List Tools for a Server
+
 ```bash
-cat servers/git-openapi.json | jq '.paths | keys[]'
+./scripts/list_tools.sh --server git
 ```
 
-### Get Tool Description
+### Search Tools by Keyword
+
 ```bash
+./scripts/list_tools.sh --search "branch"
+```
+
+### Get Full Tool Details
+
+```bash
+./scripts/list_tools.sh --detail git git_status
+```
+
+### Show Registry Statistics
+
+```bash
+./scripts/list_tools.sh --stats
+```
+
+### Advanced: Query OpenAPI Specs Directly
+
+Only use these when you need full parameter descriptions with detailed documentation:
+
+```bash
+# Get tool description
 cat servers/git-openapi.json | jq '.paths."/git_status".post.description'
-```
 
-### Get Tool Parameters
-```bash
-cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model.properties'
-```
-
-### Get Required Parameters
-```bash
-cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model.required'
+# Get complete parameter schema with descriptions
+cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model'
 ```
 
 ## Resources
 
-This skill includes bundled resources to support workspace script creation:
+### Main Registry Interface
 
-### scripts/
+**Always use `./scripts/list_tools.sh`** for tool discovery:
 
-Helper scripts for discovering tools and parameters:
+```bash
+# Primary interface - use this instead of reading registry directly
+./scripts/list_tools.sh              # List all servers
+./scripts/list_tools.sh --server git  # List tools
+./scripts/list_tools.sh --detail git git_status  # Get parameters
+./scripts/list_tools.sh --search "keyword"  # Search tools
+```
 
-- **`list_tools.sh`**: List all available tools for an MCP server
-  ```bash
-  .claude/skills/mcp-workspace/scripts/list_tools.sh git
-  ```
+### Token-Efficient Registry
 
-- **`show_tool_schema.sh`**: Show parameter schema for a specific tool
-  ```bash
-  .claude/skills/mcp-workspace/scripts/show_tool_schema.sh git git_status
-  ```
+The registry system provides ~27% token savings over loading individual OpenAPI specs:
 
-### references/
+- **`registry/registry.json`**: Auto-generated compact index (DO NOT READ DIRECTLY)
+- **`scripts/generate_registry.sh`**: Regenerates registry from OpenAPI specs
+- **`docs/using-registry.md`**: Complete registry system documentation
 
-Detailed reference documentation loaded as needed:
+### Script Template
 
-- **`conventions.md`**: Complete guide to MCPO conventions, patterns, and common jq usage
-- **`examples.md`**: Comprehensive examples of well-written workspace scripts
+- **`scripts/TEMPLATE.sh`**: Copy this to create new workspace scripts with proper structure, error handling, and documentation
 
-Load these when:
-- Need detailed jq patterns for complex JSON manipulation
-- Want to see multiple complete script examples
-- Need reference for error handling or advanced patterns
+### Skill Resources (Bundled)
 
-### assets/
+This skill includes bundled reference documentation in `.claude/skills/mcp-workspace/`:
 
-Template file for creating new scripts:
-
-- **`TEMPLATE.sh`**: Copy this to create new workspace scripts with proper structure, error handling, and documentation
+- **`references/conventions.md`**: Complete guide to MCPO conventions, patterns, and registry usage
+- **`references/examples.md`**: Comprehensive examples of workspace scripts
+- **`assets/TEMPLATE.sh`**: Alternative template location (use `scripts/TEMPLATE.sh` instead)
 
 ## Common Patterns
 

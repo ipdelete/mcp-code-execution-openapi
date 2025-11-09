@@ -33,6 +33,8 @@ This architecture enables:
 ├── scripts/              # System scripts (infrastructure only)
 │   ├── run_mcpo.sh      # Start MCPO server
 │   ├── download_openapi.sh  # Download OpenAPI specs from MCPO
+│   ├── generate_registry.sh  # Generate token-efficient registry
+│   ├── list_tools.sh    # Interactive tool browser
 │   └── TEMPLATE.sh      # Template for creating workspace scripts
 ├── workspace/            # User scripts using MCP via curl (PUT YOUR SCRIPTS HERE)
 │   ├── git_status.sh    # Example: Get git repository status
@@ -41,6 +43,8 @@ This architecture enables:
 │   ├── git-openapi.json
 │   ├── fetch-openapi.json
 │   └── context7-openapi.json
+├── registry/             # Token-efficient tool registry (auto-generated)
+│   └── registry.json    # Compact index of all MCP tools
 └── docs/                 # Design documentation
 ```
 
@@ -48,6 +52,7 @@ This architecture enables:
 - System/infrastructure scripts → `scripts/`
 - User bash scripts that call MCP tools → `workspace/`
 - OpenAPI specs are downloaded, not generated
+- Registry is auto-generated from OpenAPI specs
 - Scripts are created on-demand when needed
 
 ## Development Commands
@@ -193,25 +198,31 @@ This project follows strict conventions to make script creation predictable:
 
 ### 5. Discovering Tools and Parameters
 
-**List all tools for a server:**
+**PRIMARY METHOD: Use `list_tools.sh` interface** (token-efficient, see `docs/using-registry.md`):
+
 ```bash
+# IMPORTANT: Always use list_tools.sh - DO NOT read registry.json directly
+./scripts/list_tools.sh                        # List all servers
+./scripts/list_tools.sh --server github        # List tools for a server
+./scripts/list_tools.sh --search "branch"      # Search tools
+./scripts/list_tools.sh --detail git git_status  # Full tool details
+./scripts/list_tools.sh --stats                # Show statistics
+```
+
+**Alternative: Query OpenAPI specs directly** (when you need full parameter descriptions):
+
+```bash
+# List all tools for a server
 cat servers/git-openapi.json | jq '.paths | keys[]'
-```
 
-**Get tool description:**
-```bash
+# Get tool description
 cat servers/git-openapi.json | jq '.paths."/git_status".post.description'
-```
 
-**Get required parameters:**
-```bash
+# Get full parameter schema with descriptions
 cat servers/git-openapi.json | jq '.components.schemas.git_status_form_model'
 ```
 
-**See all available servers:**
-```bash
-cat mcp_config.json | jq '.mcpServers | keys[]'
-```
+**Note:** Do NOT read `registry/registry.json` directly. Always use `./scripts/list_tools.sh` as the interface.
 
 ## Key Patterns
 
