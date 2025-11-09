@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "."]
+    },
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "database": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/database-server", "/home/cip/wrk/mcpo_ctx7/tmp/database.db"]
+    }
+  }
+}

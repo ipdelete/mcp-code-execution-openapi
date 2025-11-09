@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Downloaded OpenAPI specs (regenerated from MCPO)
+servers/*
+!servers/.gitkeep
+
+# Workspace scripts (created on-demand)
+workspace/*
+!workspace/.gitkeep
+
+# MCP config (use mcp_config.example.json as template)
+mcp_config.json
+!mcp_config.example.json
