@@ -15,7 +15,14 @@
     },
     "database": {
       "command": "npx",
-      "args": ["-y", "@executeautomation/database-server", "/home/cip/wrk/mcpo_ctx7/tmp/database.db"]
+      "args": ["-y", "@executeautomation/database-server", "/full/path/mcp-code-execution-openapi/tmp/database.db"]
+    },
+    "github": {
+      "type": "streamable-http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer github_pat..."
+      }
     }
   }
 }
